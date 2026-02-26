@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+:root {
+  --color-bg: #f5f0eb;
+  --color-sidebar: #1a1a1a;
+  --color-card: #ffffff;
+  --color-card-accent: #3d2e1f;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #6b6b6b;
+  --color-text-muted: #999999;
+  --color-accent: #c45a3c;
+  --color-green: #2d6a4f;
+  --color-red: #c45a3c;
+  --color-border: #e5e0db;
+  --color-nav-active: #c45a3c;
+  --color-nav-text: #999999;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+  }
+
+  .font-primary {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+}
