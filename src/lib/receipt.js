@@ -20,31 +20,48 @@ function guessCategory(text) {
 }
 
 function extractAmount(text) {
-  // Look for "Total" with a dollar amount on the same line (prefer last/largest "total")
-  const totalMatches = [...text.matchAll(/total[^$\n]*\$\s*([\d,]+\.\d{2})/gi)]
-  if (totalMatches.length > 0) {
-    // Pick the last "total" match — usually the grand total
-    const val = parseFloat(totalMatches[totalMatches.length - 1][1].replace(/,/g, ''))
-    if (val > 0) return val
-  }
+  // Normalize: OCR may read $ as S or s, collapse whitespace
+  const cleaned = text.replace(/\r/g, '')
 
-  // Look for labeled amounts
-  const labeledPatterns = [
-    /(?:amount\s*due|balance\s*due|grand\s*total)[:\s]*\$?\s*([\d,]+\.\d{2})/i,
-    /(?:total)[:\s]+\$?\s*([\d,]+\.\d{2})/i,
+  // 1. Look for "Total" near a dollar amount (same line or next line)
+  const totalPatterns = [
+    /total\s*\(?USD\)?[^0-9\n]*[\$S]?\s*([\d,]+\.\d{2})/gi,
+    /total[^0-9\n]*[\$S]?\s*([\d,]+\.\d{2})/gi,
+    /(?:amount\s*due|balance\s*due|grand\s*total)[^0-9\n]*[\$S]?\s*([\d,]+\.\d{2})/gi,
   ]
-  for (const pattern of labeledPatterns) {
-    const match = text.match(pattern)
-    if (match) {
-      const val = parseFloat(match[1].replace(/,/g, ''))
+
+  for (const pattern of totalPatterns) {
+    const matches = [...cleaned.matchAll(pattern)]
+    if (matches.length > 0) {
+      const val = parseFloat(matches[matches.length - 1][1].replace(/,/g, ''))
       if (val > 0) return val
     }
   }
 
-  // Fallback: find all dollar amounts and pick the largest
-  const allAmounts = [...text.matchAll(/\$\s*([\d,]+\.\d{2})/g)]
+  // 2. Look line by line for a line containing "total" and a number
+  const lines = cleaned.split('\n')
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (/total/i.test(lines[i])) {
+      const amountMatch = lines[i].match(/([\d,]+\.\d{2})/)
+      if (amountMatch) {
+        const val = parseFloat(amountMatch[1].replace(/,/g, ''))
+        if (val > 0) return val
+      }
+      // Check next line too (amount might be on the line below "Total")
+      if (i + 1 < lines.length) {
+        const nextMatch = lines[i + 1].match(/([\d,]+\.\d{2})/)
+        if (nextMatch) {
+          const val = parseFloat(nextMatch[1].replace(/,/g, ''))
+          if (val > 0) return val
+        }
+      }
+    }
+  }
+
+  // 3. Fallback: find all dollar amounts and pick the largest
+  const allAmounts = [...cleaned.matchAll(/[\$S]?\s*([\d,]+\.\d{2})/g)]
     .map((m) => parseFloat(m[1].replace(/,/g, '')))
-    .filter((v) => v > 0)
+    .filter((v) => v > 0.5)
 
   if (allAmounts.length > 0) return Math.max(...allAmounts)
   return null
@@ -85,6 +102,7 @@ function extractDescription(text) {
 
 export async function scanReceipt(file) {
   const { data: { text } } = await Tesseract.recognize(file, 'eng')
+  console.log('OCR raw text:', text)
 
   const description = extractDescription(text)
   const amount = extractAmount(text)
