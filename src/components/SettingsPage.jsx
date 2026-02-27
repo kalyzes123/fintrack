@@ -39,8 +39,8 @@ export default function SettingsPage({ wallets, onAddWallet, onUpdateWallet, onD
 
   return (
     <div className="max-w-[600px]">
-      <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-text-primary)] mb-1">Settings</h1>
-      <p className="text-sm text-[var(--color-text-secondary)] mb-8">Configure your FinTrack preferences</p>
+      <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-text-primary)] mb-1">Wallets</h1>
+      <p className="text-sm text-[var(--color-text-secondary)] mb-8">Manage your payment methods</p>
 
       <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">

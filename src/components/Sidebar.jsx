@@ -1,10 +1,10 @@
-import { LayoutDashboard, Receipt, Users, Settings, X, LogOut } from 'lucide-react'
+import { LayoutDashboard, Receipt, Wallet, Users, X, LogOut } from 'lucide-react'
 
 const navItems = [
   { icon: LayoutDashboard, label: 'DASHBOARD', page: 'dashboard' },
   { icon: Receipt, label: 'TRANSACTIONS', page: 'transactions' },
+  { icon: Wallet, label: 'WALLETS', page: 'settings' },
   { icon: Users, label: 'ACCOUNTS', page: 'accounts' },
-  { icon: Settings, label: 'SETTINGS', page: 'settings' },
 ]
 
 export default function Sidebar({ open, onClose, currentPage, onNavigate, onLogout }) {
