@@ -108,7 +108,13 @@ function extractDate(text) {
     }
   }
 
-  // Pattern 3: MM/DD/YYYY or DD-MM-YYYY
+  // Pattern 3: YYYY/MM/DD or YYYY-MM-DD — "2017/07/12"
+  const ymdMatch = text.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/)
+  if (ymdMatch) {
+    return `${ymdMatch[1]}-${ymdMatch[2].padStart(2, '0')}-${ymdMatch[3].padStart(2, '0')}`
+  }
+
+  // Pattern 4: MM/DD/YYYY or DD/MM/YYYY
   const dateMatch = text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/)
   if (dateMatch) {
     const month = dateMatch[1].padStart(2, '0')
