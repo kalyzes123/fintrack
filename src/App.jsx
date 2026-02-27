@@ -15,6 +15,7 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import { getTransactions, addTransaction, updateTransaction, deleteTransaction, getWallets, addWallet, updateWallet, deleteWallet } from './lib/storage'
 import { getToken, getUser, logout } from './lib/auth'
+import { supabase } from './lib/supabase'
 
 const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
@@ -71,28 +72,39 @@ function App() {
 
   // Check auth on mount
   useEffect(() => {
-    const token = getToken()
-    if (!token) {
-      setAuthPage('landing')
-      return
-    }
-    getUser().then((u) => {
+    async function init() {
+      // Check if there's an active session
+      if (supabase) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
+          setAuthPage('landing')
+          return
+        }
+      } else {
+        const token = getToken()
+        if (!token) {
+          setAuthPage('landing')
+          return
+        }
+      }
+      const u = await getUser()
       if (u) {
         setUser(u)
         setAuthPage('app')
-        setTransactions(getTransactions())
-        setWallets(getWallets())
+        setTransactions(await getTransactions())
+        setWallets(await getWallets())
       } else {
         setAuthPage('landing')
       }
-    })
+    }
+    init()
   }, [])
 
-  const handleAuth = (u) => {
+  const handleAuth = async (u) => {
     setUser(u)
     setAuthPage('app')
-    setTransactions(getTransactions())
-    setWallets(getWallets())
+    setTransactions(await getTransactions())
+    setWallets(await getWallets())
     if (!localStorage.getItem('fintrack_walkthrough_done')) {
       setShowWalkthrough(true)
       setWalkthroughStep(0)
@@ -106,36 +118,36 @@ function App() {
     setCurrentPage('dashboard')
   }
 
-  const handleAdd = useCallback((data) => {
-    setTransactions(addTransaction(data))
+  const handleAdd = useCallback(async (data) => {
+    setTransactions(await addTransaction(data))
   }, [])
 
-  const handleUpdate = useCallback((id, data) => {
-    setTransactions(updateTransaction(id, data))
+  const handleUpdate = useCallback(async (id, data) => {
+    setTransactions(await updateTransaction(id, data))
   }, [])
 
   const handleDeleteRequest = useCallback((id) => {
-    const tx = getTransactions().find((t) => t.id === id)
+    const tx = transactions.find((t) => t.id === id)
     setDeleteTarget(tx || { id })
-  }, [])
+  }, [transactions])
 
-  const handleDeleteConfirm = useCallback(() => {
+  const handleDeleteConfirm = useCallback(async () => {
     if (deleteTarget) {
-      setTransactions(deleteTransaction(deleteTarget.id))
+      setTransactions(await deleteTransaction(deleteTarget.id))
     }
     setDeleteTarget(null)
   }, [deleteTarget])
 
-  const handleAddWallet = useCallback((data) => {
-    setWallets(addWallet(data))
+  const handleAddWallet = useCallback(async (data) => {
+    setWallets(await addWallet(data))
   }, [])
 
-  const handleUpdateWallet = useCallback((id, data) => {
-    setWallets(updateWallet(id, data))
+  const handleUpdateWallet = useCallback(async (id, data) => {
+    setWallets(await updateWallet(id, data))
   }, [])
 
-  const handleDeleteWallet = useCallback((id) => {
-    setWallets(deleteWallet(id))
+  const handleDeleteWallet = useCallback(async (id) => {
+    setWallets(await deleteWallet(id))
   }, [])
 
   const handleWalkthroughNext = () => {

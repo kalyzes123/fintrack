@@ -1,13 +1,14 @@
-const API_URL = 'http://localhost:3001'
+import { supabase } from './supabase'
+
 const TOKEN_KEY = 'fintrack_token'
 const USERS_KEY = 'fintrack_users'
 
-// --- Token helpers ---
+// --- Token helpers (used by localStorage fallback only) ---
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY)
 }
 
-export function setToken(token) {
+function setToken(token) {
   localStorage.setItem(TOKEN_KEY, token)
 }
 
@@ -15,7 +16,7 @@ export function removeToken() {
   localStorage.removeItem(TOKEN_KEY)
 }
 
-// --- Local user storage ---
+// --- Local user storage (fallback when Supabase unavailable) ---
 function getLocalUsers() {
   const stored = localStorage.getItem(USERS_KEY)
   if (!stored) {
@@ -32,26 +33,18 @@ function saveLocalUsers(users) {
   localStorage.setItem(USERS_KEY, JSON.stringify(users))
 }
 
-// Network errors should fall through to localStorage fallback
-function isNetworkError(err) {
-  return err.name === 'TypeError' || err.name === 'AbortError' || err.name === 'TimeoutError'
-}
+// --- Auth functions: Supabase first, localStorage fallback ---
 
-// --- Try server, fall back to localStorage ---
 export async function register(name, email, password) {
-  try {
-    const res = await fetch(`${API_URL}/api/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password }),
-      signal: AbortSignal.timeout(3000),
+  if (supabase) {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name } },
     })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.error || 'Registration failed')
-    setToken(data.token)
-    return data.user
-  } catch (err) {
-    if (!isNetworkError(err)) throw err
+    if (error) throw new Error(error.message)
+    const user = data.user
+    return { id: user.id, name: user.user_metadata.name, email: user.email }
   }
 
   // Fallback: localStorage
@@ -67,19 +60,11 @@ export async function register(name, email, password) {
 }
 
 export async function login(email, password) {
-  try {
-    const res = await fetch(`${API_URL}/api/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-      signal: AbortSignal.timeout(3000),
-    })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.error || 'Login failed')
-    setToken(data.token)
-    return data.user
-  } catch (err) {
-    if (!isNetworkError(err)) throw err
+  if (supabase) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) throw new Error(error.message)
+    const user = data.user
+    return { id: user.id, name: user.user_metadata.name, email: user.email }
   }
 
   // Fallback: localStorage
@@ -93,20 +78,17 @@ export async function login(email, password) {
 }
 
 export async function getUser() {
-  const token = getToken()
-  if (!token) return null
-
-  try {
-    const res = await fetch(`${API_URL}/api/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-      signal: AbortSignal.timeout(2000),
-    })
-    if (res.ok) return res.json()
-  } catch {
-    // Server unavailable, try local
+  if (supabase) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      return { id: user.id, name: user.user_metadata.name, email: user.email }
+    }
+    return null
   }
 
-  // Fallback: decode localStorage token
+  // Fallback: localStorage
+  const token = getToken()
+  if (!token) return null
   try {
     const { id } = JSON.parse(atob(token))
     const users = getLocalUsers()
@@ -115,35 +97,32 @@ export async function getUser() {
   } catch {
     // Invalid token
   }
-
   removeToken()
   return null
 }
 
 export async function updateProfile(data) {
-  const token = getToken()
+  if (supabase) {
+    const updates = {}
+    if (data.name) updates.data = { name: data.name }
+    if (data.email) updates.email = data.email
 
-  try {
-    const res = await fetch(`${API_URL}/api/me`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
-      signal: AbortSignal.timeout(3000),
-    })
-    if (res.ok) {
-      const result = await res.json()
-      return result
+    if (data.name || data.email) {
+      const { error } = await supabase.auth.updateUser(updates)
+      if (error) throw new Error(error.message)
     }
-    const err = await res.json()
-    throw new Error(err.error || 'Update failed')
-  } catch (err) {
-    if (!isNetworkError(err)) throw err
+
+    if (data.newPassword) {
+      const { error } = await supabase.auth.updateUser({ password: data.newPassword })
+      if (error) throw new Error(error.message)
+    }
+
+    const { data: { user } } = await supabase.auth.getUser()
+    return { id: user.id, name: user.user_metadata.name, email: user.email }
   }
 
   // Fallback: localStorage
+  const token = getToken()
   try {
     const { id } = JSON.parse(atob(token))
     const users = getLocalUsers()
@@ -165,6 +144,9 @@ export async function updateProfile(data) {
   }
 }
 
-export function logout() {
+export async function logout() {
+  if (supabase) {
+    await supabase.auth.signOut()
+  }
   removeToken()
 }
