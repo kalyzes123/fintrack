@@ -12,7 +12,12 @@ function formatAmount(amount, type) {
   return `${prefix}RM${amount.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-export default function TransactionsPage({ transactions, onAdd, onUpdate, onDelete }) {
+function getWalletName(wallets, id) {
+  const w = wallets.find((w) => w.id === id)
+  return w ? w.name : '—'
+}
+
+export default function TransactionsPage({ transactions, onAdd, onUpdate, onDelete, wallets = [] }) {
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
@@ -79,6 +84,7 @@ export default function TransactionsPage({ transactions, onAdd, onUpdate, onDele
                 <th className="px-4 py-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">CATEGORY</th>
                 <th className="px-4 py-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">DATE</th>
                 <th className="px-4 py-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">AMOUNT</th>
+                <th className="px-4 py-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">WALLET</th>
                 <th className="px-4 py-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">STATUS</th>
                 <th className="px-4 py-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">ACTIONS</th>
               </tr>
@@ -92,6 +98,7 @@ export default function TransactionsPage({ transactions, onAdd, onUpdate, onDele
                   <td className={`px-4 py-4 text-sm font-semibold ${tx.type === 'income' ? 'text-[var(--color-green)]' : 'text-[var(--color-red)]'}`}>
                     {formatAmount(tx.amount, tx.type)}
                   </td>
+                  <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)]">{getWalletName(wallets, tx.wallet)}</td>
                   <td className="px-4 py-4">
                     <span className={`
                       inline-block px-2.5 py-1 rounded text-[10px] font-bold tracking-wider text-white uppercase
@@ -120,7 +127,7 @@ export default function TransactionsPage({ transactions, onAdd, onUpdate, onDele
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-sm text-[var(--color-text-muted)]">
+                  <td colSpan={7} className="px-6 py-12 text-center text-sm text-[var(--color-text-muted)]">
                     {search ? 'No transactions match your search.' : 'No transactions yet. Add one to get started!'}
                   </td>
                 </tr>
@@ -135,7 +142,7 @@ export default function TransactionsPage({ transactions, onAdd, onUpdate, onDele
             <div key={tx.id} className="flex items-center justify-between py-3 border-b border-[var(--color-border)] last:border-0">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{tx.description}</p>
-                <p className="text-xs text-[var(--color-text-secondary)]">{tx.category} · {formatDate(tx.date)}</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">{tx.category} · {formatDate(tx.date)} · {getWalletName(wallets, tx.wallet)}</p>
               </div>
               <div className="flex items-center gap-3 ml-3">
                 <div className="text-right">
@@ -167,6 +174,7 @@ export default function TransactionsPage({ transactions, onAdd, onUpdate, onDele
         onClose={handleCloseModal}
         onSave={handleSave}
         transaction={editing}
+        wallets={wallets}
       />
     </div>
   )

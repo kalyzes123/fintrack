@@ -12,9 +12,10 @@ const defaultForm = {
   amount: '',
   type: 'expense',
   status: 'complete',
+  wallet: '',
 }
 
-export default function TransactionModal({ open, onClose, onSave, transaction }) {
+export default function TransactionModal({ open, onClose, onSave, transaction, wallets = [] }) {
   const [form, setForm] = useState(defaultForm)
   const [scanning, setScanning] = useState(false)
   const [scanError, setScanError] = useState('')
@@ -30,9 +31,10 @@ export default function TransactionModal({ open, onClose, onSave, transaction })
         amount: String(transaction.amount),
         type: transaction.type,
         status: transaction.status,
+        wallet: transaction.wallet || (wallets.length > 0 ? wallets[0].id : ''),
       })
     } else {
-      setForm(defaultForm)
+      setForm({ ...defaultForm, wallet: wallets.length > 0 ? wallets[0].id : '' })
     }
     setScanError('')
     setErrors({})
@@ -221,7 +223,20 @@ export default function TransactionModal({ open, onClose, onSave, transaction })
             </div>
           </div>
 
-          {/* Status */}
+          {/* Wallet + Status row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-[var(--color-text-secondary)] tracking-wider mb-1.5">WALLET</label>
+              <select
+                value={form.wallet}
+                onChange={(e) => setForm({ ...form, wallet: e.target.value })}
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)]"
+              >
+                {wallets.map((w) => (
+                  <option key={w.id} value={w.id}>{w.name}</option>
+                ))}
+              </select>
+            </div>
           <div>
             <label className="block text-xs font-semibold text-[var(--color-text-secondary)] tracking-wider mb-1.5">STATUS</label>
             <select
@@ -232,6 +247,7 @@ export default function TransactionModal({ open, onClose, onSave, transaction })
               <option value="complete">Complete</option>
               <option value="pending">Pending</option>
             </select>
+          </div>
           </div>
 
           {/* Actions */}

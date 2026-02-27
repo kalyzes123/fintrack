@@ -10,7 +10,12 @@ function formatAmount(amount, type) {
   return `${prefix}RM${amount.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-export default function RecentTransactions({ transactions, onNavigate }) {
+function getWalletName(wallets, id) {
+  const w = wallets.find((w) => w.id === id)
+  return w ? w.name : '—'
+}
+
+export default function RecentTransactions({ transactions, onNavigate, wallets = [] }) {
   const recent = transactions.slice(0, 5)
 
   return (
@@ -34,6 +39,7 @@ export default function RecentTransactions({ transactions, onNavigate }) {
               <th className="pb-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">CATEGORY</th>
               <th className="pb-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">DATE</th>
               <th className="pb-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">AMOUNT</th>
+              <th className="pb-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">WALLET</th>
               <th className="pb-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">STATUS</th>
             </tr>
           </thead>
@@ -46,6 +52,7 @@ export default function RecentTransactions({ transactions, onNavigate }) {
                 <td className={`py-4 text-sm font-semibold ${tx.type === 'income' ? 'text-[var(--color-green)]' : 'text-[var(--color-red)]'}`}>
                   {formatAmount(tx.amount, tx.type)}
                 </td>
+                <td className="py-4 text-sm text-[var(--color-text-secondary)]">{getWalletName(wallets, tx.wallet)}</td>
                 <td className="py-4">
                   <span className={`
                     inline-block px-2.5 py-1 rounded text-[10px] font-bold tracking-wider text-white uppercase
@@ -66,7 +73,7 @@ export default function RecentTransactions({ transactions, onNavigate }) {
           <div key={tx.id} className="flex items-center justify-between py-3 border-b border-[var(--color-border)] last:border-0">
             <div>
               <p className="text-sm font-medium text-[var(--color-text-primary)]">{tx.description}</p>
-              <p className="text-xs text-[var(--color-text-secondary)]">{tx.category} · {formatDate(tx.date)}</p>
+              <p className="text-xs text-[var(--color-text-secondary)]">{tx.category} · {formatDate(tx.date)} · {getWalletName(wallets, tx.wallet)}</p>
             </div>
             <div className="text-right">
               <p className={`text-sm font-semibold ${tx.type === 'income' ? 'text-[var(--color-green)]' : 'text-[var(--color-red)]'}`}>

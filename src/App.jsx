@@ -12,7 +12,7 @@ import ConfirmModal from './components/ConfirmModal'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
-import { getTransactions, addTransaction, updateTransaction, deleteTransaction } from './lib/storage'
+import { getTransactions, addTransaction, updateTransaction, deleteTransaction, getWallets, addWallet, updateWallet, deleteWallet } from './lib/storage'
 import { getToken, getUser, logout } from './lib/auth'
 
 const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -59,6 +59,7 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState('dashboard')
   const [transactions, setTransactions] = useState([])
+  const [wallets, setWallets] = useState([])
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [dateRange, setDateRange] = useState(() => {
     const now = new Date()
@@ -77,6 +78,7 @@ function App() {
         setUser(u)
         setAuthPage('app')
         setTransactions(getTransactions())
+        setWallets(getWallets())
       } else {
         setAuthPage('landing')
       }
@@ -87,6 +89,7 @@ function App() {
     setUser(u)
     setAuthPage('app')
     setTransactions(getTransactions())
+    setWallets(getWallets())
   }
 
   const handleLogout = () => {
@@ -115,6 +118,18 @@ function App() {
     }
     setDeleteTarget(null)
   }, [deleteTarget])
+
+  const handleAddWallet = useCallback((data) => {
+    setWallets(addWallet(data))
+  }, [])
+
+  const handleUpdateWallet = useCallback((id, data) => {
+    setWallets(updateWallet(id, data))
+  }, [])
+
+  const handleDeleteWallet = useCallback((id) => {
+    setWallets(deleteWallet(id))
+  }, [])
 
   // Loading state
   if (authPage === 'loading') {
@@ -204,7 +219,7 @@ function App() {
               </div>
 
               <div className="mt-6">
-                <RecentTransactions transactions={filtered} onNavigate={setCurrentPage} />
+                <RecentTransactions transactions={filtered} onNavigate={setCurrentPage} wallets={wallets} />
               </div>
 
             </>
@@ -218,6 +233,7 @@ function App() {
                 onAdd={handleAdd}
                 onUpdate={handleUpdate}
                 onDelete={handleDeleteRequest}
+                wallets={wallets}
               />
             </>
           )}
@@ -225,7 +241,12 @@ function App() {
           {currentPage === 'settings' && (
             <>
               {mobileMenuBtn}
-              <SettingsPage />
+              <SettingsPage
+                wallets={wallets}
+                onAddWallet={handleAddWallet}
+                onUpdateWallet={handleUpdateWallet}
+                onDeleteWallet={handleDeleteWallet}
+              />
             </>
           )}
 
