@@ -2,8 +2,8 @@ import { useMemo } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 
 const formatYAxis = (value) => {
-  if (value >= 1000) return `$${(value / 1000).toFixed(1)}K`
-  return `$${value}`
+  if (value >= 1000) return `RM${(value / 1000).toFixed(1)}K`
+  return `RM${value}`
 }
 
 export default function RevenueTrend({ transactions }) {
@@ -61,7 +61,7 @@ export default function RevenueTrend({ transactions }) {
                 tick={{ fontSize: 11, fill: '#999' }}
               />
               <Tooltip
-                formatter={(value, name) => [`$${value.toLocaleString()}`, name === 'income' ? 'Income' : 'Expenses']}
+                formatter={(value, name) => [`RM${value.toLocaleString()}`, name === 'income' ? 'Income' : 'Expenses']}
                 contentStyle={{
                   borderRadius: '8px',
                   border: '1px solid #e5e0db',

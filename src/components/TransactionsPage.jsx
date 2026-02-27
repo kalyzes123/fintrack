@@ -9,7 +9,7 @@ function formatDate(dateStr) {
 
 function formatAmount(amount, type) {
   const prefix = type === 'income' ? '+' : '-'
-  return `${prefix}$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return `${prefix}RM${amount.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 export default function TransactionsPage({ transactions, onAdd, onUpdate, onDelete }) {

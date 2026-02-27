@@ -32,8 +32,8 @@ export default function SpendingBreakdown({ transactions }) {
     .sort((a, b) => b.value - a.value)
 
   const totalFormatted = total >= 1000
-    ? `$${(total / 1000).toFixed(1)}K`
-    : `$${total.toFixed(0)}`
+    ? `RM${(total / 1000).toFixed(1)}K`
+    : `RM${total.toFixed(0)}`
 
   return (
     <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-6 flex flex-col">
@@ -73,7 +73,7 @@ export default function SpendingBreakdown({ transactions }) {
               <div>
                 <p className="text-sm font-medium text-[var(--color-text-primary)]">{item.name}</p>
                 <p className="text-xs text-[var(--color-text-secondary)]">
-                  ${item.value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} — {item.pct}
+                  RM{item.value.toLocaleString('en-MY', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} — {item.pct}
                 </p>
               </div>
             </div>

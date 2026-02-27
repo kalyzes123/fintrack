@@ -2,9 +2,9 @@ import { TrendingUp, TrendingDown } from 'lucide-react'
 
 function formatCurrency(value) {
   if (value >= 1000) {
-    return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+    return 'RM' + value.toLocaleString('en-MY', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
   }
-  return '$' + value.toFixed(2)
+  return 'RM' + value.toFixed(2)
 }
 
 export default function StatsCards({ transactions }) {
