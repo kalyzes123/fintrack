@@ -32,18 +32,13 @@ function saveLocalUsers(users) {
   localStorage.setItem(USERS_KEY, JSON.stringify(users))
 }
 
-// --- Try server, fall back to localStorage ---
-async function isServerAvailable() {
-  try {
-    const res = await fetch(`${API_URL}/api/me`, { signal: AbortSignal.timeout(1500) })
-    return res.status !== 0
-  } catch {
-    return false
-  }
+// Network errors should fall through to localStorage fallback
+function isNetworkError(err) {
+  return err.name === 'TypeError' || err.name === 'AbortError' || err.name === 'TimeoutError'
 }
 
+// --- Try server, fall back to localStorage ---
 export async function register(name, email, password) {
-  // Try server first
   try {
     const res = await fetch(`${API_URL}/api/register`, {
       method: 'POST',
@@ -56,7 +51,7 @@ export async function register(name, email, password) {
     setToken(data.token)
     return data.user
   } catch (err) {
-    if (err.message && !err.message.includes('fetch')) throw err
+    if (!isNetworkError(err)) throw err
   }
 
   // Fallback: localStorage
@@ -72,7 +67,6 @@ export async function register(name, email, password) {
 }
 
 export async function login(email, password) {
-  // Try server first
   try {
     const res = await fetch(`${API_URL}/api/login`, {
       method: 'POST',
@@ -85,7 +79,7 @@ export async function login(email, password) {
     setToken(data.token)
     return data.user
   } catch (err) {
-    if (err.message && !err.message.includes('fetch')) throw err
+    if (!isNetworkError(err)) throw err
   }
 
   // Fallback: localStorage
@@ -102,7 +96,6 @@ export async function getUser() {
   const token = getToken()
   if (!token) return null
 
-  // Try server first
   try {
     const res = await fetch(`${API_URL}/api/me`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -130,7 +123,6 @@ export async function getUser() {
 export async function updateProfile(data) {
   const token = getToken()
 
-  // Try server first
   try {
     const res = await fetch(`${API_URL}/api/me`, {
       method: 'PUT',
@@ -148,7 +140,7 @@ export async function updateProfile(data) {
     const err = await res.json()
     throw new Error(err.error || 'Update failed')
   } catch (err) {
-    if (err.message && !err.message.includes('fetch')) throw err
+    if (!isNetworkError(err)) throw err
   }
 
   // Fallback: localStorage
