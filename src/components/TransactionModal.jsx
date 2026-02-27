@@ -119,8 +119,8 @@ export default function TransactionModal({ open, onClose, onSave, transaction })
               {scanError && (
                 <p className="text-xs text-[var(--color-red)] mt-2">{scanError}</p>
               )}
-              <p className="text-[11px] text-[var(--color-text-muted)] mt-1.5 text-center">
-                Scanned values may not be 100% accurate. Please verify before saving.
+              <p className="text-[11px] text-[var(--color-accent)] mt-2 text-center bg-[var(--color-accent)]/10 rounded-md px-3 py-1.5">
+                * Scanned values may not be 100% accurate. Please verify before saving.
               </p>
             </div>
           )}
