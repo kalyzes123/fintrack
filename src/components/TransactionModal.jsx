@@ -38,7 +38,7 @@ export default function TransactionModal({ open, onClose, onSave, transaction })
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!form.description || !form.amount) return
+    if (!form.description || !form.amount || parseFloat(form.amount) <= 0) return
     onSave({
       ...form,
       amount: parseFloat(form.amount),
