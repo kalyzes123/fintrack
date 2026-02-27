@@ -204,7 +204,7 @@ export default function TransactionModal({ open, onClose, onSave, transaction, w
             <div>
               <label className="block text-xs font-semibold text-[var(--color-text-secondary)] tracking-wider mb-1.5">DATE</label>
               <DatePicker
-                selected={form.date ? new Date(form.date + 'T00:00:00') : new Date()}
+                selected={(() => { const d = form.date ? new Date(form.date + 'T00:00:00') : new Date(); return isNaN(d.getTime()) ? new Date() : d })()}
                 onChange={(date) => {
                   if (date) {
                     const y = date.getFullYear()

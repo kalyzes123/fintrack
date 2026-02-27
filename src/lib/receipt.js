@@ -114,14 +114,27 @@ function extractDate(text) {
     return `${ymdMatch[1]}-${ymdMatch[2].padStart(2, '0')}-${ymdMatch[3].padStart(2, '0')}`
   }
 
-  // Pattern 4: MM/DD/YYYY or DD/MM/YYYY
+  // Pattern 4: DD/MM/YYYY or MM/DD/YYYY
   const dateMatch = text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/)
   if (dateMatch) {
-    const month = dateMatch[1].padStart(2, '0')
-    const day = dateMatch[2].padStart(2, '0')
+    let first = parseInt(dateMatch[1], 10)
+    let second = parseInt(dateMatch[2], 10)
     let year = dateMatch[3]
     if (year.length === 2) year = '20' + year
-    return `${year}-${month}-${day}`
+    // If first > 12, it must be a day (DD/MM/YYYY)
+    let month, day
+    if (first > 12) {
+      day = first
+      month = second
+    } else if (second > 12) {
+      month = first
+      day = second
+    } else {
+      // Ambiguous — assume DD/MM/YYYY (common in Malaysia)
+      day = first
+      month = second
+    }
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
   }
 
   return new Date().toISOString().split('T')[0]

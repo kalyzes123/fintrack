@@ -30,65 +30,73 @@ export default function RecentTransactions({ transactions, onNavigate, wallets =
         </button>
       </div>
 
-      {/* Desktop table */}
-      <div className="hidden sm:block overflow-x-auto">
-        <table className="w-full text-left">
-          <thead>
-            <tr className="border-b border-[var(--color-border)]">
-              <th className="pb-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">DESCRIPTION</th>
-              <th className="pb-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">CATEGORY</th>
-              <th className="pb-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">DATE</th>
-              <th className="pb-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">AMOUNT</th>
-              <th className="pb-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">WALLET</th>
-              <th className="pb-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">STATUS</th>
-            </tr>
-          </thead>
-          <tbody>
+      {recent.length > 0 ? (
+        <>
+          {/* Desktop table */}
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-[var(--color-border)]">
+                  <th className="pb-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">DESCRIPTION</th>
+                  <th className="pb-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">CATEGORY</th>
+                  <th className="pb-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">DATE</th>
+                  <th className="pb-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">AMOUNT</th>
+                  <th className="pb-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">WALLET</th>
+                  <th className="pb-3 text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)]">STATUS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recent.map((tx) => (
+                  <tr key={tx.id} className="border-b border-[var(--color-border)] last:border-0">
+                    <td className="py-4 text-sm font-medium text-[var(--color-text-primary)]">{tx.description}</td>
+                    <td className="py-4 text-sm text-[var(--color-text-secondary)]">{tx.category}</td>
+                    <td className="py-4 text-sm text-[var(--color-text-secondary)]">{formatDate(tx.date)}</td>
+                    <td className={`py-4 text-sm font-semibold ${tx.type === 'income' ? 'text-[var(--color-green)]' : 'text-[var(--color-red)]'}`}>
+                      {formatAmount(tx.amount, tx.type)}
+                    </td>
+                    <td className="py-4 text-sm text-[var(--color-text-secondary)]">{getWalletName(wallets, tx.wallet)}</td>
+                    <td className="py-4">
+                      <span className={`
+                        inline-block px-2.5 py-1 rounded text-[10px] font-bold tracking-wider text-white uppercase
+                        ${tx.status === 'complete' ? 'bg-[var(--color-text-primary)]' : 'bg-[var(--color-accent)]'}
+                      `}>
+                        {tx.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="sm:hidden flex flex-col gap-3">
             {recent.map((tx) => (
-              <tr key={tx.id} className="border-b border-[var(--color-border)] last:border-0">
-                <td className="py-4 text-sm font-medium text-[var(--color-text-primary)]">{tx.description}</td>
-                <td className="py-4 text-sm text-[var(--color-text-secondary)]">{tx.category}</td>
-                <td className="py-4 text-sm text-[var(--color-text-secondary)]">{formatDate(tx.date)}</td>
-                <td className={`py-4 text-sm font-semibold ${tx.type === 'income' ? 'text-[var(--color-green)]' : 'text-[var(--color-red)]'}`}>
-                  {formatAmount(tx.amount, tx.type)}
-                </td>
-                <td className="py-4 text-sm text-[var(--color-text-secondary)]">{getWalletName(wallets, tx.wallet)}</td>
-                <td className="py-4">
+              <div key={tx.id} className="flex items-center justify-between py-3 border-b border-[var(--color-border)] last:border-0">
+                <div>
+                  <p className="text-sm font-medium text-[var(--color-text-primary)]">{tx.description}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">{tx.category} · {formatDate(tx.date)} · {getWalletName(wallets, tx.wallet)}</p>
+                </div>
+                <div className="text-right">
+                  <p className={`text-sm font-semibold ${tx.type === 'income' ? 'text-[var(--color-green)]' : 'text-[var(--color-red)]'}`}>
+                    {formatAmount(tx.amount, tx.type)}
+                  </p>
                   <span className={`
-                    inline-block px-2.5 py-1 rounded text-[10px] font-bold tracking-wider text-white uppercase
+                    inline-block px-2 py-0.5 rounded text-[9px] font-bold tracking-wider text-white mt-1 uppercase
                     ${tx.status === 'complete' ? 'bg-[var(--color-text-primary)]' : 'bg-[var(--color-accent)]'}
                   `}>
                     {tx.status}
                   </span>
-                </td>
-              </tr>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile cards */}
-      <div className="sm:hidden flex flex-col gap-3">
-        {recent.map((tx) => (
-          <div key={tx.id} className="flex items-center justify-between py-3 border-b border-[var(--color-border)] last:border-0">
-            <div>
-              <p className="text-sm font-medium text-[var(--color-text-primary)]">{tx.description}</p>
-              <p className="text-xs text-[var(--color-text-secondary)]">{tx.category} · {formatDate(tx.date)} · {getWalletName(wallets, tx.wallet)}</p>
-            </div>
-            <div className="text-right">
-              <p className={`text-sm font-semibold ${tx.type === 'income' ? 'text-[var(--color-green)]' : 'text-[var(--color-red)]'}`}>
-                {formatAmount(tx.amount, tx.type)}
-              </p>
-              <span className={`
-                inline-block px-2 py-0.5 rounded text-[9px] font-bold tracking-wider text-white mt-1 uppercase
-                ${tx.status === 'complete' ? 'bg-[var(--color-text-primary)]' : 'bg-[var(--color-accent)]'}
-              `}>
-                {tx.status}
-              </span>
-            </div>
           </div>
-        ))}
-      </div>
+        </>
+      ) : (
+        <p className="text-center text-sm text-[var(--color-text-muted)] py-8">
+          No transactions yet. Add your first transaction to get started!
+        </p>
+      )}
     </div>
   )
 }
