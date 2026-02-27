@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, Camera, Loader2 } from 'lucide-react'
+import DatePicker from 'react-datepicker'
+import 'react-datepicker/dist/react-datepicker.css'
 import { CATEGORIES } from '../lib/storage'
 import { scanReceipt } from '../lib/receipt'
 
@@ -199,10 +201,21 @@ export default function TransactionModal({ open, onClose, onSave, transaction })
             </div>
             <div>
               <label className="block text-xs font-semibold text-[var(--color-text-secondary)] tracking-wider mb-1.5">DATE</label>
-              <input
-                type="date"
-                value={form.date}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
+              <DatePicker
+                selected={form.date ? new Date(form.date + 'T00:00:00') : new Date()}
+                onChange={(date) => {
+                  if (date) {
+                    const y = date.getFullYear()
+                    const m = String(date.getMonth() + 1).padStart(2, '0')
+                    const d = String(date.getDate()).padStart(2, '0')
+                    setForm({ ...form, date: `${y}-${m}-${d}` })
+                  }
+                }}
+                dateFormat="dd MMM yyyy"
+                maxDate={new Date()}
+                showMonthDropdown
+                showYearDropdown
+                dropdownMode="select"
                 className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)]"
               />
             </div>
