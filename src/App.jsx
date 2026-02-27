@@ -9,6 +9,7 @@ import TransactionsPage from './components/TransactionsPage'
 import SettingsPage from './components/SettingsPage'
 import AccountsPage from './components/AccountsPage'
 import ConfirmModal from './components/ConfirmModal'
+import Walkthrough from './components/Walkthrough'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -61,6 +62,8 @@ function App() {
   const [transactions, setTransactions] = useState([])
   const [wallets, setWallets] = useState([])
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [showWalkthrough, setShowWalkthrough] = useState(false)
+  const [walkthroughStep, setWalkthroughStep] = useState(0)
   const [dateRange, setDateRange] = useState(() => {
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -90,6 +93,10 @@ function App() {
     setAuthPage('app')
     setTransactions(getTransactions())
     setWallets(getWallets())
+    if (!localStorage.getItem('fintrack_walkthrough_done')) {
+      setShowWalkthrough(true)
+      setWalkthroughStep(0)
+    }
   }
 
   const handleLogout = () => {
@@ -130,6 +137,17 @@ function App() {
   const handleDeleteWallet = useCallback((id) => {
     setWallets(deleteWallet(id))
   }, [])
+
+  const handleWalkthroughNext = () => {
+    setWalkthroughStep((s) => s + 1)
+  }
+
+  const handleWalkthroughSkip = () => {
+    setShowWalkthrough(false)
+    setWalkthroughStep(0)
+    setCurrentPage('dashboard')
+    localStorage.setItem('fintrack_walkthrough_done', 'true')
+  }
 
   // Loading state
   if (authPage === 'loading') {
@@ -207,7 +225,9 @@ function App() {
                 <MonthPicker value={dateRange} onChange={setDateRange} />
               </div>
 
-              <StatsCards transactions={filtered} />
+              <div id="stats-cards">
+                <StatsCards transactions={filtered} />
+              </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mt-6">
                 <div className="lg:col-span-3">
@@ -271,6 +291,15 @@ function App() {
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      {showWalkthrough && (
+        <Walkthrough
+          step={walkthroughStep}
+          onNext={handleWalkthroughNext}
+          onSkip={handleWalkthroughSkip}
+          onNavigate={setCurrentPage}
+        />
+      )}
     </div>
   )
 }

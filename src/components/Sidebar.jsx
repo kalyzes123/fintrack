@@ -43,6 +43,7 @@ export default function Sidebar({ open, onClose, currentPage, onNavigate, onLogo
           {navItems.map((item) => (
             <button
               key={item.page}
+              id={item.page === 'settings' ? 'nav-wallets' : undefined}
               onClick={() => {
                 onNavigate(item.page)
                 onClose()

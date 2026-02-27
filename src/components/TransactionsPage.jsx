@@ -65,6 +65,7 @@ export default function TransactionsPage({ transactions, onAdd, onUpdate, onDele
             />
           </div>
           <button
+            id="btn-add-transaction"
             onClick={() => setModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2.5 bg-[var(--color-text-primary)] text-white rounded-lg text-sm font-medium hover:opacity-90 shrink-0"
           >
