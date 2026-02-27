@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Mail } from 'lucide-react'
 import { register } from '../lib/auth'
 
 export default function RegisterPage({ onNavigate, onAuth }) {
@@ -10,6 +10,7 @@ export default function RegisterPage({ onNavigate, onAuth }) {
   const [showPwd, setShowPwd] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -27,6 +28,10 @@ export default function RegisterPage({ onNavigate, onAuth }) {
     setLoading(true)
     try {
       const user = await register(name, email, password)
+      if (user.emailConfirmationRequired) {
+        setEmailSent(true)
+        return
+      }
       onAuth(user)
     } catch (err) {
       setError(err.message)
@@ -49,6 +54,24 @@ export default function RegisterPage({ onNavigate, onAuth }) {
 
       <div className="flex-1 flex items-center justify-center px-4 pb-16">
         <div className="w-full max-w-[400px]">
+          {emailSent ? (
+            <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-8 text-center">
+              <div className="w-12 h-12 bg-[var(--color-accent)]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mail size={24} className="text-[var(--color-accent)]" />
+              </div>
+              <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-2">Check your email</h2>
+              <p className="text-sm text-[var(--color-text-secondary)] mb-6">
+                We've sent a confirmation link to <span className="font-medium text-[var(--color-text-primary)]">{email}</span>. Click the link to activate your account.
+              </p>
+              <button
+                onClick={() => onNavigate('login')}
+                className="w-full py-2.5 bg-[var(--color-accent)] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                Go to Sign In
+              </button>
+            </div>
+          ) : (
+          <>
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Create your account</h1>
             <p className="text-sm text-[var(--color-text-secondary)] mt-1">Start tracking your finances today</p>
@@ -137,6 +160,8 @@ export default function RegisterPage({ onNavigate, onAuth }) {
               Sign in
             </button>
           </p>
+          </>
+          )}
         </div>
       </div>
     </div>

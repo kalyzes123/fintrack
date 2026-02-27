@@ -44,6 +44,10 @@ export async function register(name, email, password) {
     })
     if (error) throw new Error(error.message)
     const user = data.user
+    // If email confirmation is required, session will be null
+    if (!data.session) {
+      return { id: user.id, name: user.user_metadata.name, email: user.email, emailConfirmationRequired: true }
+    }
     return { id: user.id, name: user.user_metadata.name, email: user.email }
   }
 
