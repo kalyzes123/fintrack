@@ -16,6 +16,7 @@ export default function TransactionModal({ open, onClose, onSave, transaction })
   const [form, setForm] = useState(defaultForm)
   const [scanning, setScanning] = useState(false)
   const [scanError, setScanError] = useState('')
+  const [formError, setFormError] = useState('')
   const fileInputRef = useRef(null)
 
   useEffect(() => {
@@ -32,13 +33,22 @@ export default function TransactionModal({ open, onClose, onSave, transaction })
       setForm(defaultForm)
     }
     setScanError('')
+    setFormError('')
   }, [transaction, open])
 
   if (!open) return null
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!form.description || !form.amount || parseFloat(form.amount) <= 0) return
+    if (!form.description) {
+      setFormError('Please enter a description.')
+      return
+    }
+    if (!form.amount || parseFloat(form.amount) <= 0) {
+      setFormError('Please enter a valid amount.')
+      return
+    }
+    setFormError('')
     onSave({
       ...form,
       amount: parseFloat(form.amount),
@@ -131,11 +141,13 @@ export default function TransactionModal({ open, onClose, onSave, transaction })
             <input
               type="text"
               value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              onChange={(e) => { setForm({ ...form, description: e.target.value }); setFormError('') }}
               placeholder="e.g. Whole Foods Market"
-              required
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)]"
+              className={`w-full px-3 py-2.5 border rounded-lg text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)] ${formError && !form.description ? 'border-[var(--color-accent)]' : 'border-[var(--color-border)]'}`}
             />
+            {formError && !form.description && (
+              <p className="text-[11px] text-[var(--color-accent)] mt-1">{formError}</p>
+            )}
           </div>
 
           {/* Amount + Type row */}
@@ -147,11 +159,13 @@ export default function TransactionModal({ open, onClose, onSave, transaction })
                 step="0.01"
                 min="0"
                 value={form.amount}
-                onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                onChange={(e) => { setForm({ ...form, amount: e.target.value }); setFormError('') }}
                 placeholder="0.00"
-                required
-                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)]"
+                className={`w-full px-3 py-2.5 border rounded-lg text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)] ${formError && (!form.amount || parseFloat(form.amount) <= 0) ? 'border-[var(--color-accent)]' : 'border-[var(--color-border)]'}`}
               />
+              {formError && (!form.amount || parseFloat(form.amount) <= 0) && (
+                <p className="text-[11px] text-[var(--color-accent)] mt-1">{formError}</p>
+              )}
             </div>
             <div>
               <label className="block text-xs font-semibold text-[var(--color-text-secondary)] tracking-wider mb-1.5">TYPE</label>
