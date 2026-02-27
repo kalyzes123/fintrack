@@ -11,6 +11,14 @@ const CATEGORY_KEYWORDS = {
   Health: ['pharmacy', 'cvs', 'walgreens', 'doctor', 'hospital', 'clinic', 'dental', 'gym', 'fitness', 'guardian', 'watsons'],
 }
 
+// Known brand names to detect in OCR text for description
+const KNOWN_BRANDS = [
+  'starbucks', 'mcdonald', 'kfc', 'burger king', 'subway', 'pizza hut', 'domino',
+  'grab', 'shopee', 'lazada', 'aeon', 'giant', 'tesco', 'petronas', 'shell',
+  'guardian', 'watsons', 'uniqlo', 'mr diy', 'daiso', 'ikea', 'muji',
+  'secret recipe', 'old town', 'mamak', 'sushi king', 'kenny rogers',
+]
+
 function guessCategory(text) {
   const lower = text.toLowerCase()
   for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
@@ -23,39 +31,32 @@ function guessCategory(text) {
 function parseOcrAmount(raw) {
   const num = raw.replace(/,/g, '')
   if (num.includes('.')) return parseFloat(num)
-  // No decimal: assume last 2 digits are cents (e.g. 2325 → 23.25)
   const n = parseInt(num, 10)
   if (n > 100) return n / 100
   return n
 }
 
-// Currency prefix pattern: RM, $, or OCR misreads like s/S
-const CURRENCY_PREFIX = /(?:RM|rm|Rm|\$|[sS])\s*/
+// Match RM, $, or OCR misreads (but only s/S when followed by a digit to avoid false matches)
+const CURRENCY_RE = /(?:RM|rm|Rm|\$)\s*([\d,]+\.?\d*)/gi
 
 function extractAmount(text) {
   const cleaned = text.replace(/\r/g, '')
   const lines = cleaned.split('\n')
 
-  // 1. Search backwards for lines containing "total" — last total is usually grand total
+  // 1. Search backwards for lines containing "total" with a currency-prefixed amount
   for (let i = lines.length - 1; i >= 0; i--) {
     if (/total/i.test(lines[i])) {
-      // Match currency prefix (RM, $, s) followed by amount
-      const amountMatch = lines[i].match(new RegExp(CURRENCY_PREFIX.source + '(-?[\\d,]+\\.?\\d*)', 'i'))
-      if (amountMatch) {
-        const val = parseOcrAmount(amountMatch[1].replace('-', ''))
-        if (val > 0) return val
-      }
-      // Also try: just a number at the end of the line
-      const endMatch = lines[i].match(/([\d,]+\.?\d+)\s*$/)
-      if (endMatch) {
-        const val = parseOcrAmount(endMatch[1])
+      // Try matching RM/$ amount on this line
+      const matches = [...lines[i].matchAll(CURRENCY_RE)]
+      if (matches.length > 0) {
+        const val = parseOcrAmount(matches[matches.length - 1][1])
         if (val > 0) return val
       }
       // Check next line too (amount might be on the line below "Total")
       if (i + 1 < lines.length) {
-        const nextMatch = lines[i + 1].match(new RegExp(CURRENCY_PREFIX.source + '(-?[\\d,]+\\.?\\d*)', 'i'))
-        if (nextMatch) {
-          const val = parseOcrAmount(nextMatch[1].replace('-', ''))
+        const nextMatches = [...lines[i + 1].matchAll(CURRENCY_RE)]
+        if (nextMatches.length > 0) {
+          const val = parseOcrAmount(nextMatches[nextMatches.length - 1][1])
           if (val > 0) return val
         }
       }
@@ -65,17 +66,16 @@ function extractAmount(text) {
   // 2. Look for subtotal if no total found
   for (let i = lines.length - 1; i >= 0; i--) {
     if (/sub\s*-?\s*total/i.test(lines[i])) {
-      const amountMatch = lines[i].match(new RegExp(CURRENCY_PREFIX.source + '([\\d,]+\\.?\\d*)', 'i'))
-      if (amountMatch) {
-        const val = parseOcrAmount(amountMatch[1])
+      const matches = [...lines[i].matchAll(CURRENCY_RE)]
+      if (matches.length > 0) {
+        const val = parseOcrAmount(matches[matches.length - 1][1])
         if (val > 0) return val
       }
     }
   }
 
-  // 3. Fallback: find all amounts with RM or $ prefix and pick the largest
-  const currencyPattern = new RegExp(CURRENCY_PREFIX.source + '([\\d,]+\\.?\\d+)', 'gi')
-  const allAmounts = [...cleaned.matchAll(currencyPattern)]
+  // 3. Fallback: find ALL RM/$ amounts in the text and pick the largest
+  const allAmounts = [...cleaned.matchAll(CURRENCY_RE)]
     .map((m) => parseOcrAmount(m[1]))
     .filter((v) => v > 0.5)
 
@@ -86,8 +86,7 @@ function extractAmount(text) {
 const MONTH_NAMES = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06', jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12' }
 
 function extractDate(text) {
-  // Named month with 2 or 4 digit year: "24 Sep 18", "24 Sep 2018", "Sep 24, 2018"
-  // Pattern 1: DD Mon YY(YY)
+  // Pattern 1: DD Mon YY(YY) — "24 Sep 18"
   const dmy = text.match(/(\d{1,2})\s+(\w{3,})\s+(\d{2,4})/)
   if (dmy) {
     const monthKey = dmy[2].toLowerCase().slice(0, 3)
@@ -98,7 +97,7 @@ function extractDate(text) {
     }
   }
 
-  // Pattern 2: Mon DD, YY(YY)
+  // Pattern 2: Mon DD, YY(YY) — "Sep 24, 2018"
   const mdy = text.match(/(\w{3,})\s+(\d{1,2}),?\s*(\d{2,4})/i)
   if (mdy) {
     const monthKey = mdy[1].toLowerCase().slice(0, 3)
@@ -109,7 +108,7 @@ function extractDate(text) {
     }
   }
 
-  // Pattern 3: MM/DD/YYYY or DD-MM-YYYY etc
+  // Pattern 3: MM/DD/YYYY or DD-MM-YYYY
   const dateMatch = text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/)
   if (dateMatch) {
     const month = dateMatch[1].padStart(2, '0')
@@ -123,14 +122,21 @@ function extractDate(text) {
 }
 
 function extractDescription(text) {
-  const lines = text.split('\n').map((l) => l.trim()).filter(Boolean)
+  const lower = text.toLowerCase()
 
-  // Skip lines that are just noise (short, mostly numbers, addresses, tax IDs)
-  const skipPatterns = [/^\d+$/, /tax\s*id/i, /invoice/i, /receipt\s*#/i, /^date/i, /www\./i, /^\(?\d{3}\)?/, /lot\s+\d/i]
+  // First: check for known brand names anywhere in the text
+  for (const brand of KNOWN_BRANDS) {
+    if (lower.includes(brand)) {
+      return brand.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    }
+  }
+
+  // Fallback: find the first meaningful line
+  const lines = text.split('\n').map((l) => l.trim()).filter(Boolean)
+  const skipPatterns = [/^\d+$/, /tax/i, /invoice/i, /receipt/i, /^date/i, /www\./i, /^\(?\d{3}\)?/, /lot\s+\d/i, /service/i, /website/i]
 
   for (const line of lines.slice(0, 10)) {
     const cleaned = line.replace(/[^a-zA-Z\s&'.-]/g, '').trim()
-    // Must be at least 4 chars and not a skip pattern
     if (cleaned.length >= 4 && !skipPatterns.some((p) => p.test(line))) {
       return cleaned
     }
