@@ -19,11 +19,13 @@ export default function StatsCards({ transactions }) {
   const balance = income - expenses
   const savingsRate = income > 0 ? ((income - expenses) / income) * 100 : 0
 
+  const hasData = transactions.length > 0
+
   const stats = [
-    { label: 'TOTAL BALANCE', value: formatCurrency(balance), change: '+12.4%', up: balance >= 0 },
-    { label: 'MONTHLY INCOME', value: formatCurrency(income), change: '+8.2%', up: true },
-    { label: 'MONTHLY EXPENSES', value: formatCurrency(expenses), change: '+3.1%', up: false },
-    { label: 'SAVINGS RATE', value: `${savingsRate.toFixed(1)}%`, change: '+5.7%', up: savingsRate >= 0, accent: true },
+    { label: 'TOTAL BALANCE', value: formatCurrency(balance), up: balance >= 0 },
+    { label: 'MONTHLY INCOME', value: formatCurrency(income), up: true },
+    { label: 'MONTHLY EXPENSES', value: formatCurrency(expenses), up: false },
+    { label: 'SAVINGS RATE', value: `${savingsRate.toFixed(1)}%`, up: savingsRate >= 0, accent: true },
   ]
 
   return (
@@ -48,12 +50,13 @@ export default function StatsCards({ transactions }) {
           </p>
           <div className="flex items-end justify-between">
             <p className="text-3xl font-bold">{stat.value}</p>
-            <div className={`flex items-center gap-1 text-xs font-medium ${
-              stat.up ? 'text-[var(--color-green)]' : 'text-[var(--color-red)]'
-            } ${stat.accent ? '!text-green-300' : ''}`}>
-              {stat.up ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-              {stat.change}
-            </div>
+            {hasData && (
+              <div className={`flex items-center gap-1 text-xs font-medium ${
+                stat.up ? 'text-[var(--color-green)]' : 'text-[var(--color-red)]'
+              } ${stat.accent ? '!text-green-300' : ''}`}>
+                {stat.up ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+              </div>
+            )}
           </div>
         </div>
       ))}
