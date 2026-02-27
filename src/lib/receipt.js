@@ -43,9 +43,9 @@ function extractAmount(text) {
   const cleaned = text.replace(/\r/g, '')
   const lines = cleaned.split('\n')
 
-  // 1. Search backwards for lines containing "total" with a currency-prefixed amount
+  // 1. Search backwards for lines containing "total" or "nett" with a currency-prefixed amount
   for (let i = lines.length - 1; i >= 0; i--) {
-    if (/total/i.test(lines[i])) {
+    if (/total|nett/i.test(lines[i])) {
       // Try matching RM/$ amount on this line
       const matches = [...lines[i].matchAll(CURRENCY_RE)]
       if (matches.length > 0) {
