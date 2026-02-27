@@ -19,48 +19,57 @@ function guessCategory(text) {
   return 'Other'
 }
 
+// OCR often drops decimal points: $252.00 → s25200, $15.00 → $1500
+// This helper extracts a number and tries to restore the decimal
+function parseOcrAmount(raw) {
+  const num = raw.replace(/,/g, '')
+  // If it already has a decimal point, use as-is
+  if (num.includes('.')) return parseFloat(num)
+  // No decimal: assume last 2 digits are cents (e.g. 25200 → 252.00)
+  const n = parseInt(num, 10)
+  if (n > 100) return n / 100
+  return n
+}
+
 function extractAmount(text) {
-  // Normalize: OCR may read $ as S or s, collapse whitespace
   const cleaned = text.replace(/\r/g, '')
-
-  // 1. Look for "Total" near a dollar amount (same line or next line)
-  const totalPatterns = [
-    /total\s*\(?USD\)?[^0-9\n]*[\$S]?\s*([\d,]+\.\d{2})/gi,
-    /total[^0-9\n]*[\$S]?\s*([\d,]+\.\d{2})/gi,
-    /(?:amount\s*due|balance\s*due|grand\s*total)[^0-9\n]*[\$S]?\s*([\d,]+\.\d{2})/gi,
-  ]
-
-  for (const pattern of totalPatterns) {
-    const matches = [...cleaned.matchAll(pattern)]
-    if (matches.length > 0) {
-      const val = parseFloat(matches[matches.length - 1][1].replace(/,/g, ''))
-      if (val > 0) return val
-    }
-  }
-
-  // 2. Look line by line for a line containing "total" and a number
   const lines = cleaned.split('\n')
+
+  // 1. Search backwards for lines containing "total" — last total is usually grand total
   for (let i = lines.length - 1; i >= 0; i--) {
     if (/total/i.test(lines[i])) {
-      const amountMatch = lines[i].match(/([\d,]+\.\d{2})/)
+      // Look for a number on this line (with or without $ or decimal)
+      // OCR reads $ as s/S, so match: $252.00, s25200, 252.00, 25200
+      const amountMatch = lines[i].match(/[\$sS]?\s*([\d,]+\.?\d*)\s*$/)
       if (amountMatch) {
-        const val = parseFloat(amountMatch[1].replace(/,/g, ''))
+        const val = parseOcrAmount(amountMatch[1])
         if (val > 0) return val
       }
-      // Check next line too (amount might be on the line below "Total")
+      // Check next line too
       if (i + 1 < lines.length) {
-        const nextMatch = lines[i + 1].match(/([\d,]+\.\d{2})/)
+        const nextMatch = lines[i + 1].match(/[\$sS]?\s*([\d,]+\.?\d*)/)
         if (nextMatch) {
-          const val = parseFloat(nextMatch[1].replace(/,/g, ''))
+          const val = parseOcrAmount(nextMatch[1])
           if (val > 0) return val
         }
       }
     }
   }
 
-  // 3. Fallback: find all dollar amounts and pick the largest
-  const allAmounts = [...cleaned.matchAll(/[\$S]?\s*([\d,]+\.\d{2})/g)]
-    .map((m) => parseFloat(m[1].replace(/,/g, '')))
+  // 2. Look for subtotal if no total found
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (/sub\s*-?\s*total/i.test(lines[i])) {
+      const amountMatch = lines[i].match(/[\$sS]?\s*([\d,]+\.?\d*)\s*$/)
+      if (amountMatch) {
+        const val = parseOcrAmount(amountMatch[1])
+        if (val > 0) return val
+      }
+    }
+  }
+
+  // 3. Fallback: find all dollar amounts (with actual $ sign) and pick the largest
+  const allAmounts = [...cleaned.matchAll(/\$\s*([\d,]+\.?\d*)/g)]
+    .map((m) => parseOcrAmount(m[1]))
     .filter((v) => v > 0.5)
 
   if (allAmounts.length > 0) return Math.max(...allAmounts)
