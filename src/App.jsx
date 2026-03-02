@@ -215,7 +215,12 @@ function App() {
   if (authPage === 'register') return <div className="font-primary h-full"><RegisterPage onNavigate={setAuthPage} onAuth={handleAuth} /></div>
 
   // Authenticated app
-  const sorted = [...transactions].sort((a, b) => b.date.localeCompare(a.date))
+  const sorted = [...transactions].sort((a, b) => {
+    const dateDiff = b.date.localeCompare(a.date)
+    if (dateDiff !== 0) return dateDiff
+    if (a.created_at && b.created_at) return b.created_at.localeCompare(a.created_at)
+    return 0
+  })
   const filtered = sorted.filter((t) => t.date.startsWith(dateRange))
 
   const dateLabel = (() => {

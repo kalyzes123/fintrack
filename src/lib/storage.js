@@ -97,6 +97,7 @@ export async function getTransactions() {
       .from('transactions')
       .select('*')
       .order('date', { ascending: false })
+      .order('created_at', { ascending: false })
     if (error) throw new Error(error.message)
     return data.map(mapTransactionFromDb)
   }
