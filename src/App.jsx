@@ -5,6 +5,7 @@ import StatsCards from './components/StatsCards'
 import RevenueTrend from './components/RevenueTrend'
 import SpendingBreakdown from './components/SpendingBreakdown'
 import RecentTransactions from './components/RecentTransactions'
+import WalletSummary from './components/WalletSummary'
 import TransactionsPage from './components/TransactionsPage'
 import SettingsPage from './components/SettingsPage'
 import AccountsPage from './components/AccountsPage'
@@ -283,6 +284,10 @@ function App() {
                 <div className="lg:col-span-2">
                   <SpendingBreakdown transactions={filtered} />
                 </div>
+              </div>
+
+              <div className="mt-6">
+                <WalletSummary wallets={wallets} onNavigate={setCurrentPage} />
               </div>
 
               <div className="mt-6">
