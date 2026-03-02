@@ -6,7 +6,7 @@ const inputCls =
   'w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)]'
 const labelCls = 'block text-[11px] font-semibold tracking-wider text-[var(--color-text-secondary)] mb-1'
 
-function WalletForm({ form, setForm, onSave, onCancel, saveLabel, isDashed }) {
+function WalletForm({ form, setForm, onSave, onCancel, saveLabel, isDashed, error }) {
   const handleTypeChange = (newType) => {
     setForm({ ...form, type: newType, name: newType === 'bank' ? MALAYSIAN_BANKS[0] : '' })
   }
@@ -71,6 +71,11 @@ function WalletForm({ form, setForm, onSave, onCancel, saveLabel, isDashed }) {
         </div>
       </div>
 
+      {/* Error */}
+      {error && (
+        <p className="text-xs text-[var(--color-red)]">{error}</p>
+      )}
+
       {/* Row 3: Actions */}
       <div className="flex gap-2 pt-1">
         <button
@@ -94,30 +99,43 @@ export default function SettingsPage({ wallets, onAddWallet, onUpdateWallet, onD
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({ name: '', type: 'cash', balance: '' })
+  const [saveError, setSaveError] = useState('')
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!form.name.trim()) return
-    onAddWallet({ name: form.name.trim(), type: form.type, balance: parseFloat(form.balance) || 0 })
-    setForm({ name: '', type: 'cash', balance: '' })
-    setAdding(false)
+    setSaveError('')
+    try {
+      await onAddWallet({ name: form.name.trim(), type: form.type, balance: parseFloat(form.balance) || 0 })
+      setForm({ name: '', type: 'cash', balance: '' })
+      setAdding(false)
+    } catch (err) {
+      setSaveError(err.message || 'Failed to add wallet. Please try again.')
+    }
   }
 
   const handleEdit = (wallet) => {
     setEditingId(wallet.id)
     setAdding(false)
+    setSaveError('')
     setForm({ name: wallet.name, type: wallet.type, balance: wallet.balance != null ? String(wallet.balance) : '' })
   }
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!form.name.trim()) return
-    onUpdateWallet(editingId, { name: form.name.trim(), type: form.type, balance: parseFloat(form.balance) || 0 })
-    setEditingId(null)
-    setForm({ name: '', type: 'cash', balance: '' })
+    setSaveError('')
+    try {
+      await onUpdateWallet(editingId, { name: form.name.trim(), type: form.type, balance: parseFloat(form.balance) || 0 })
+      setEditingId(null)
+      setForm({ name: '', type: 'cash', balance: '' })
+    } catch (err) {
+      setSaveError(err.message || 'Failed to update wallet. Please try again.')
+    }
   }
 
   const handleCancel = () => {
     setAdding(false)
     setEditingId(null)
+    setSaveError('')
     setForm({ name: '', type: 'cash', balance: '' })
   }
 
@@ -160,6 +178,7 @@ export default function SettingsPage({ wallets, onAddWallet, onUpdateWallet, onD
                   onCancel={handleCancel}
                   saveLabel="Save Changes"
                   isDashed={false}
+                  error={saveError}
                 />
               ) : (
                 <div className="flex items-center gap-3 px-4 py-3 border border-[var(--color-border)] rounded-lg">
@@ -195,6 +214,7 @@ export default function SettingsPage({ wallets, onAddWallet, onUpdateWallet, onD
               onCancel={handleCancel}
               saveLabel="Add Wallet"
               isDashed
+              error={saveError}
             />
           )}
 
