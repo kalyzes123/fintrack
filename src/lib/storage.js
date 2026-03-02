@@ -15,11 +15,11 @@ export const WALLET_TYPES = [
 ]
 
 const DEFAULT_WALLETS = [
-  { id: 'w1', name: 'Cash', type: 'cash' },
-  { id: 'w2', name: 'Debit Card', type: 'debit' },
-  { id: 'w3', name: 'Credit Card', type: 'credit' },
-  { id: 'w4', name: 'E-Wallet', type: 'ewallet' },
-  { id: 'w5', name: 'Savings', type: 'savings' },
+  { id: 'w1', name: 'Cash', type: 'cash', balance: 0 },
+  { id: 'w2', name: 'Debit Card', type: 'debit', balance: 0 },
+  { id: 'w3', name: 'Credit Card', type: 'credit', balance: 0 },
+  { id: 'w4', name: 'E-Wallet', type: 'ewallet', balance: 0 },
+  { id: 'w5', name: 'Savings', type: 'savings', balance: 0 },
 ]
 
 export const CATEGORIES = [
@@ -144,7 +144,7 @@ export async function getWallets() {
   if (userId) {
     const { data, error } = await supabase
       .from('wallets')
-      .select('id, name, type')
+      .select('id, name, type, balance')
       .order('created_at', { ascending: true })
     if (error) throw new Error(error.message)
     return data

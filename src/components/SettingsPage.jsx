@@ -5,31 +5,31 @@ import { WALLET_TYPES } from '../lib/storage'
 export default function SettingsPage({ wallets, onAddWallet, onUpdateWallet, onDeleteWallet }) {
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState(null)
-  const [form, setForm] = useState({ name: '', type: 'cash' })
+  const [form, setForm] = useState({ name: '', type: 'cash', balance: '' })
 
   const handleAdd = () => {
     if (!form.name.trim()) return
-    onAddWallet({ name: form.name.trim(), type: form.type })
-    setForm({ name: '', type: 'cash' })
+    onAddWallet({ name: form.name.trim(), type: form.type, balance: parseFloat(form.balance) || 0 })
+    setForm({ name: '', type: 'cash', balance: '' })
     setAdding(false)
   }
 
   const handleEdit = (wallet) => {
     setEditingId(wallet.id)
-    setForm({ name: wallet.name, type: wallet.type })
+    setForm({ name: wallet.name, type: wallet.type, balance: wallet.balance != null ? String(wallet.balance) : '' })
   }
 
   const handleUpdate = () => {
     if (!form.name.trim()) return
-    onUpdateWallet(editingId, { name: form.name.trim(), type: form.type })
+    onUpdateWallet(editingId, { name: form.name.trim(), type: form.type, balance: parseFloat(form.balance) || 0 })
     setEditingId(null)
-    setForm({ name: '', type: 'cash' })
+    setForm({ name: '', type: 'cash', balance: '' })
   }
 
   const handleCancel = () => {
     setAdding(false)
     setEditingId(null)
-    setForm({ name: '', type: 'cash' })
+    setForm({ name: '', type: 'cash', balance: '' })
   }
 
   const getTypeLabel = (value) => {
@@ -80,6 +80,15 @@ export default function SettingsPage({ wallets, onAddWallet, onUpdateWallet, onD
                       <option key={wt.value} value={wt.value}>{wt.label}</option>
                     ))}
                   </select>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={form.balance}
+                    onChange={(e) => setForm({ ...form, balance: e.target.value })}
+                    placeholder="0.00"
+                    className="w-24 px-2.5 py-1.5 border border-[var(--color-border)] rounded text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)]"
+                  />
                   <button onClick={handleUpdate} className="p-1.5 rounded hover:bg-green-50 text-[var(--color-green)]">
                     <Check size={16} />
                   </button>
@@ -92,6 +101,11 @@ export default function SettingsPage({ wallets, onAddWallet, onUpdateWallet, onD
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-[var(--color-text-primary)]">{wallet.name}</p>
                     <p className="text-xs text-[var(--color-text-secondary)]">{getTypeLabel(wallet.type)}</p>
+                  </div>
+                  <div className="text-right mr-2">
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      {(wallet.balance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
                   </div>
                   <button
                     onClick={() => handleEdit(wallet)}
@@ -129,6 +143,15 @@ export default function SettingsPage({ wallets, onAddWallet, onUpdateWallet, onD
                   <option key={wt.value} value={wt.value}>{wt.label}</option>
                 ))}
               </select>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={form.balance}
+                onChange={(e) => setForm({ ...form, balance: e.target.value })}
+                placeholder="0.00"
+                className="w-24 px-2.5 py-1.5 border border-[var(--color-border)] rounded text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)]"
+              />
               <button onClick={handleAdd} className="p-1.5 rounded hover:bg-green-50 text-[var(--color-green)]">
                 <Check size={16} />
               </button>

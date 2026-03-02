@@ -63,6 +63,7 @@ function App() {
   const [transactions, setTransactions] = useState([])
   const [wallets, setWallets] = useState([])
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [showWalkthrough, setShowWalkthrough] = useState(false)
   const [walkthroughStep, setWalkthroughStep] = useState(0)
   const [dateRange, setDateRange] = useState(() => {
@@ -116,6 +117,7 @@ function App() {
     setUser(null)
     setAuthPage('landing')
     setCurrentPage('dashboard')
+    setShowLogoutConfirm(false)
   }
 
   const handleAdd = useCallback(async (data) => {
@@ -206,7 +208,7 @@ function App() {
         onClose={() => setSidebarOpen(false)}
         currentPage={currentPage}
         onNavigate={setCurrentPage}
-        onLogout={handleLogout}
+        onLogout={() => setShowLogoutConfirm(true)}
       />
 
       <main className="flex-1 overflow-y-auto">
@@ -290,6 +292,15 @@ function App() {
           )}
         </div>
       </main>
+
+      <ConfirmModal
+        open={showLogoutConfirm}
+        title="Log Out"
+        message="Are you sure you want to log out of FinTrack?"
+        confirmLabel="Log Out"
+        onConfirm={handleLogout}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
 
       <ConfirmModal
         open={!!deleteTarget}

@@ -178,7 +178,10 @@ export default function TransactionModal({ open, onClose, onSave, transaction, w
               <label className="block text-xs font-semibold text-[var(--color-text-secondary)] tracking-wider mb-1.5">TYPE</label>
               <select
                 value={form.type}
-                onChange={(e) => setForm({ ...form, type: e.target.value })}
+                onChange={(e) => {
+                  const newType = e.target.value
+                  setForm({ ...form, type: newType, category: newType === 'income' ? 'Income' : form.category })
+                }}
                 className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)]"
               >
                 <option value="expense">Expense</option>
@@ -192,9 +195,10 @@ export default function TransactionModal({ open, onClose, onSave, transaction, w
             <div>
               <label className="block text-xs font-semibold text-[var(--color-text-secondary)] tracking-wider mb-1.5">CATEGORY</label>
               <select
-                value={form.category}
+                value={form.type === 'income' ? 'Income' : form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
-                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)]"
+                disabled={form.type === 'income'}
+                className={`w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)] ${form.type === 'income' ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
                 {CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>{cat}</option>
