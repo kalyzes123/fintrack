@@ -7,11 +7,31 @@ const WALLETS_KEY = 'fintrack_wallets'
 
 export const WALLET_TYPES = [
   { value: 'cash', label: 'Cash' },
+  { value: 'bank', label: 'Bank' },
   { value: 'debit', label: 'Debit Card' },
   { value: 'credit', label: 'Credit Card' },
   { value: 'ewallet', label: 'E-Wallet' },
   { value: 'savings', label: 'Savings' },
   { value: 'investment', label: 'Investment' },
+]
+
+export const MALAYSIAN_BANKS = [
+  'Maybank',
+  'CIMB Bank',
+  'Public Bank',
+  'RHB Bank',
+  'Hong Leong Bank',
+  'AmBank',
+  'Bank Islam',
+  'Bank Rakyat',
+  'BSN (Bank Simpanan Nasional)',
+  'OCBC Bank',
+  'Standard Chartered',
+  'HSBC Bank',
+  'Alliance Bank',
+  'Affin Bank',
+  'Bank Muamalat',
+  'UOB Bank',
 ]
 
 const DEFAULT_WALLETS = [

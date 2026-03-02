@@ -1,11 +1,45 @@
 import { useState } from 'react'
 import { Plus, Pencil, Trash2, Check, X } from 'lucide-react'
-import { WALLET_TYPES } from '../lib/storage'
+import { WALLET_TYPES, MALAYSIAN_BANKS } from '../lib/storage'
+
+const inputCls = 'px-2.5 py-1.5 border border-[var(--color-border)] rounded text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)]'
+
+function NameField({ form, setForm, autoFocus }) {
+  if (form.type === 'bank') {
+    return (
+      <select
+        value={form.name}
+        onChange={(e) => setForm({ ...form, name: e.target.value })}
+        autoFocus={autoFocus}
+        className={`flex-1 ${inputCls}`}
+      >
+        {MALAYSIAN_BANKS.map((bank) => (
+          <option key={bank} value={bank}>{bank}</option>
+        ))}
+      </select>
+    )
+  }
+  return (
+    <input
+      type="text"
+      value={form.name}
+      onChange={(e) => setForm({ ...form, name: e.target.value })}
+      placeholder="Wallet name"
+      autoFocus={autoFocus}
+      className={`flex-1 ${inputCls}`}
+    />
+  )
+}
 
 export default function SettingsPage({ wallets, onAddWallet, onUpdateWallet, onDeleteWallet }) {
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({ name: '', type: 'cash', balance: '' })
+
+  const handleTypeChange = (newType) => {
+    const name = newType === 'bank' ? MALAYSIAN_BANKS[0] : ''
+    setForm({ ...form, type: newType, name })
+  }
 
   const handleAdd = () => {
     if (!form.name.trim()) return
@@ -50,7 +84,7 @@ export default function SettingsPage({ wallets, onAddWallet, onUpdateWallet, onD
           </div>
           {!adding && (
             <button
-              onClick={() => { setAdding(true); setEditingId(null); setForm({ name: '', type: 'cash' }) }}
+              onClick={() => { setAdding(true); setEditingId(null); setForm({ name: '', type: 'cash', balance: '' }) }}
               className="flex items-center gap-1.5 px-3 py-2 bg-[var(--color-text-primary)] text-white rounded-lg text-xs font-medium hover:opacity-90"
             >
               <Plus size={14} />
@@ -64,17 +98,11 @@ export default function SettingsPage({ wallets, onAddWallet, onUpdateWallet, onD
             <div key={wallet.id} className="flex items-center gap-3 px-4 py-3 border border-[var(--color-border)] rounded-lg">
               {editingId === wallet.id ? (
                 <>
-                  <input
-                    type="text"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="flex-1 px-2.5 py-1.5 border border-[var(--color-border)] rounded text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)]"
-                    autoFocus
-                  />
+                  <NameField form={form} setForm={setForm} autoFocus />
                   <select
                     value={form.type}
-                    onChange={(e) => setForm({ ...form, type: e.target.value })}
-                    className="px-2.5 py-1.5 border border-[var(--color-border)] rounded text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)]"
+                    onChange={(e) => handleTypeChange(e.target.value)}
+                    className={inputCls}
                   >
                     {WALLET_TYPES.map((wt) => (
                       <option key={wt.value} value={wt.value}>{wt.label}</option>
@@ -87,7 +115,7 @@ export default function SettingsPage({ wallets, onAddWallet, onUpdateWallet, onD
                     value={form.balance}
                     onChange={(e) => setForm({ ...form, balance: e.target.value })}
                     placeholder="0.00"
-                    className="w-24 px-2.5 py-1.5 border border-[var(--color-border)] rounded text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)]"
+                    className={`w-24 ${inputCls}`}
                   />
                   <button onClick={handleUpdate} className="p-1.5 rounded hover:bg-green-50 text-[var(--color-green)]">
                     <Check size={16} />
@@ -126,18 +154,11 @@ export default function SettingsPage({ wallets, onAddWallet, onUpdateWallet, onD
 
           {adding && (
             <div className="flex items-center gap-3 px-4 py-3 border-2 border-dashed border-[var(--color-border)] rounded-lg">
-              <input
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Wallet name"
-                className="flex-1 px-2.5 py-1.5 border border-[var(--color-border)] rounded text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)]"
-                autoFocus
-              />
+              <NameField form={form} setForm={setForm} autoFocus />
               <select
                 value={form.type}
-                onChange={(e) => setForm({ ...form, type: e.target.value })}
-                className="px-2.5 py-1.5 border border-[var(--color-border)] rounded text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)]"
+                onChange={(e) => handleTypeChange(e.target.value)}
+                className={inputCls}
               >
                 {WALLET_TYPES.map((wt) => (
                   <option key={wt.value} value={wt.value}>{wt.label}</option>
@@ -150,7 +171,7 @@ export default function SettingsPage({ wallets, onAddWallet, onUpdateWallet, onD
                 value={form.balance}
                 onChange={(e) => setForm({ ...form, balance: e.target.value })}
                 placeholder="0.00"
-                className="w-24 px-2.5 py-1.5 border border-[var(--color-border)] rounded text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)]"
+                className={`w-24 ${inputCls}`}
               />
               <button onClick={handleAdd} className="p-1.5 rounded hover:bg-green-50 text-[var(--color-green)]">
                 <Check size={16} />
