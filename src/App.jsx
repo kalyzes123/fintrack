@@ -122,11 +122,37 @@ function App() {
 
   const handleAdd = useCallback(async (data) => {
     setTransactions(await addTransaction(data))
-  }, [])
+    if (data.wallet) {
+      const wallet = wallets.find((w) => w.id === data.wallet)
+      if (wallet) {
+        const delta = data.type === 'income' ? data.amount : -data.amount
+        setWallets(await updateWallet(data.wallet, { balance: (wallet.balance ?? 0) + delta }))
+      }
+    }
+  }, [wallets])
 
-  const handleUpdate = useCallback(async (id, data) => {
-    setTransactions(await updateTransaction(id, data))
-  }, [])
+  const handleUpdate = useCallback(async (id, updates) => {
+    const oldTx = transactions.find((t) => t.id === id)
+    setTransactions(await updateTransaction(id, updates))
+    let freshWallets = wallets
+    // Reverse the old transaction's effect
+    if (oldTx?.wallet) {
+      const oldWallet = freshWallets.find((w) => w.id === oldTx.wallet)
+      if (oldWallet) {
+        const reversal = oldTx.type === 'income' ? -oldTx.amount : oldTx.amount
+        freshWallets = await updateWallet(oldTx.wallet, { balance: (oldWallet.balance ?? 0) + reversal })
+      }
+    }
+    // Apply the new transaction's effect
+    if (updates.wallet) {
+      const newWallet = freshWallets.find((w) => w.id === updates.wallet)
+      if (newWallet) {
+        const delta = updates.type === 'income' ? updates.amount : -updates.amount
+        freshWallets = await updateWallet(updates.wallet, { balance: (newWallet.balance ?? 0) + delta })
+      }
+    }
+    setWallets(freshWallets)
+  }, [transactions, wallets])
 
   const handleDeleteRequest = useCallback((id) => {
     const tx = transactions.find((t) => t.id === id)
@@ -136,9 +162,16 @@ function App() {
   const handleDeleteConfirm = useCallback(async () => {
     if (deleteTarget) {
       setTransactions(await deleteTransaction(deleteTarget.id))
+      if (deleteTarget.wallet) {
+        const wallet = wallets.find((w) => w.id === deleteTarget.wallet)
+        if (wallet) {
+          const reversal = deleteTarget.type === 'income' ? -deleteTarget.amount : deleteTarget.amount
+          setWallets(await updateWallet(deleteTarget.wallet, { balance: (wallet.balance ?? 0) + reversal }))
+        }
+      }
     }
     setDeleteTarget(null)
-  }, [deleteTarget])
+  }, [deleteTarget, wallets])
 
   const handleAddWallet = useCallback(async (data) => {
     setWallets(await addWallet(data))

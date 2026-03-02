@@ -146,8 +146,16 @@ export async function getWallets() {
       .from('wallets')
       .select('id, name, type, balance')
       .order('created_at', { ascending: true })
-    if (error) throw new Error(error.message)
-    return data
+    if (error) {
+      // balance column may not exist yet — fall back without it
+      const { data: data2, error: error2 } = await supabase
+        .from('wallets')
+        .select('id, name, type')
+        .order('created_at', { ascending: true })
+      if (error2) throw new Error(error2.message)
+      return (data2 || []).map((w) => ({ ...w, balance: 0 }))
+    }
+    return data.map((w) => ({ ...w, balance: w.balance ?? 0 }))
   }
   return getWalletsLocal()
 }
