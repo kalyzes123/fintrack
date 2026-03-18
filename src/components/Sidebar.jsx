@@ -1,8 +1,10 @@
-import { LayoutDashboard, Receipt, Wallet, Users, X, LogOut } from 'lucide-react'
+import { LayoutDashboard, Receipt, Wallet, Users, X, LogOut, Repeat2, Target } from 'lucide-react'
 
 const navItems = [
   { icon: LayoutDashboard, label: 'DASHBOARD', page: 'dashboard' },
   { icon: Receipt, label: 'TRANSACTIONS', page: 'transactions' },
+  { icon: Repeat2, label: 'RECURRING', page: 'recurring' },
+  { icon: Target, label: 'BUDGETS', page: 'budgets' },
   { icon: Wallet, label: 'WALLETS', page: 'settings' },
   { icon: Users, label: 'ACCOUNTS', page: 'accounts' },
 ]

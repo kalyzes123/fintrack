@@ -6,9 +6,12 @@ import RevenueTrend from './components/RevenueTrend'
 import SpendingBreakdown from './components/SpendingBreakdown'
 import RecentTransactions from './components/RecentTransactions'
 import WalletSummary from './components/WalletSummary'
+import BudgetProgress from './components/BudgetProgress'
 import TransactionsPage from './components/TransactionsPage'
 import SettingsPage from './components/SettingsPage'
 import AccountsPage from './components/AccountsPage'
+import RecurringPage from './components/RecurringPage'
+import BudgetsPage from './components/BudgetsPage'
 import ConfirmModal from './components/ConfirmModal'
 import Walkthrough from './components/Walkthrough'
 import MonthPicker from './components/MonthPicker'
@@ -16,9 +19,15 @@ import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
-import { getTransactions, addTransaction, updateTransaction, deleteTransaction, getWallets, addWallet, updateWallet, deleteWallet } from './lib/storage'
+import {
+  getTransactions, addTransaction, updateTransaction, deleteTransaction,
+  getWallets, addWallet, updateWallet, deleteWallet,
+  getRecurring, addRecurring, updateRecurring, deleteRecurring,
+  getBudgets, setBudget, deleteBudget,
+} from './lib/storage'
 import { getToken, getUser, logout } from './lib/auth'
 import { supabase } from './lib/supabase'
+import { processRecurring } from './lib/recurring'
 
 
 function App() {
@@ -29,6 +38,8 @@ function App() {
   const [currentPage, setCurrentPage] = useState('dashboard')
   const [transactions, setTransactions] = useState([])
   const [wallets, setWallets] = useState([])
+  const [recurring, setRecurring] = useState([])
+  const [budgets, setBudgets] = useState([])
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [showWalkthrough, setShowWalkthrough] = useState(false)
@@ -38,10 +49,34 @@ function App() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   })
 
+  async function loadAppData(skipWalkthrough = false) {
+    const txsData = await getTransactions()
+    const wsData = await getWallets()
+    const recData = await getRecurring()
+    const budData = await getBudgets()
+
+    setTransactions(txsData)
+    setWallets(wsData)
+    setBudgets(budData)
+
+    const result = await processRecurring(recData, wsData)
+    if (result) {
+      setTransactions(result.transactions)
+      setWallets(result.wallets)
+      setRecurring(await getRecurring())
+    } else {
+      setRecurring(recData)
+    }
+
+    if (!skipWalkthrough && !localStorage.getItem('fintrack_walkthrough_done')) {
+      setShowWalkthrough(true)
+      setWalkthroughStep(0)
+    }
+  }
+
   // Check auth on mount
   useEffect(() => {
     async function init() {
-      // Check if there's an active session
       if (supabase) {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) {
@@ -59,8 +94,7 @@ function App() {
       if (u) {
         setUser(u)
         setAuthPage('app')
-        setTransactions(await getTransactions())
-        setWallets(await getWallets())
+        await loadAppData(true)
       } else {
         setAuthPage('landing')
       }
@@ -82,12 +116,7 @@ function App() {
   const handleAuth = async (u) => {
     setUser(u)
     setAuthPage('app')
-    setTransactions(await getTransactions())
-    setWallets(await getWallets())
-    if (!localStorage.getItem('fintrack_walkthrough_done')) {
-      setShowWalkthrough(true)
-      setWalkthroughStep(0)
-    }
+    await loadAppData()
   }
 
   const handleLogout = () => {
@@ -113,7 +142,6 @@ function App() {
     const oldTx = transactions.find((t) => t.id === id)
     setTransactions(await updateTransaction(id, updates))
     let freshWallets = wallets
-    // Reverse the old transaction's effect
     if (oldTx?.wallet) {
       const oldWallet = freshWallets.find((w) => w.id === oldTx.wallet)
       if (oldWallet) {
@@ -121,7 +149,6 @@ function App() {
         freshWallets = await updateWallet(oldTx.wallet, { balance: (oldWallet.balance ?? 0) + reversal })
       }
     }
-    // Apply the new transaction's effect
     if (updates.wallet) {
       const newWallet = freshWallets.find((w) => w.id === updates.wallet)
       if (newWallet) {
@@ -161,6 +188,26 @@ function App() {
 
   const handleDeleteWallet = useCallback(async (id) => {
     setWallets(await deleteWallet(id))
+  }, [])
+
+  const handleAddRecurring = useCallback(async (rule) => {
+    setRecurring(await addRecurring(rule))
+  }, [])
+
+  const handleUpdateRecurring = useCallback(async (id, updates) => {
+    setRecurring(await updateRecurring(id, updates))
+  }, [])
+
+  const handleDeleteRecurring = useCallback(async (id) => {
+    setRecurring(await deleteRecurring(id))
+  }, [])
+
+  const handleSetBudget = useCallback(async (category, amount) => {
+    setBudgets(await setBudget(category, amount))
+  }, [])
+
+  const handleDeleteBudget = useCallback(async (category) => {
+    setBudgets(await deleteBudget(category))
   }, [])
 
   const handleWalkthroughNext = () => {
@@ -273,10 +320,15 @@ function App() {
                 <WalletSummary wallets={wallets} onNavigate={setCurrentPage} />
               </div>
 
+              {budgets.length > 0 && (
+                <div className="mt-6">
+                  <BudgetProgress budgets={budgets} transactions={transactions} />
+                </div>
+              )}
+
               <div className="mt-6">
                 <RecentTransactions transactions={filtered} onNavigate={setCurrentPage} wallets={wallets} />
               </div>
-
             </>
           )}
 
@@ -289,6 +341,31 @@ function App() {
                 onUpdate={handleUpdate}
                 onDelete={handleDeleteRequest}
                 wallets={wallets}
+              />
+            </>
+          )}
+
+          {currentPage === 'recurring' && (
+            <>
+              {mobileMenuBtn}
+              <RecurringPage
+                recurring={recurring}
+                wallets={wallets}
+                onAdd={handleAddRecurring}
+                onUpdate={handleUpdateRecurring}
+                onDelete={handleDeleteRecurring}
+              />
+            </>
+          )}
+
+          {currentPage === 'budgets' && (
+            <>
+              {mobileMenuBtn}
+              <BudgetsPage
+                budgets={budgets}
+                transactions={transactions}
+                onSetBudget={handleSetBudget}
+                onDeleteBudget={handleDeleteBudget}
               />
             </>
           )}

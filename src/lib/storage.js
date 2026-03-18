@@ -251,3 +251,157 @@ export function resetAllData() {
   localStorage.removeItem(ACCOUNT_KEY)
   localStorage.removeItem(WALLETS_KEY)
 }
+
+// ============================================
+// RECURRING TRANSACTIONS
+// ============================================
+
+const RECURRING_KEY = 'fintrack_recurring'
+
+function getRecurringLocal() {
+  const stored = localStorage.getItem(RECURRING_KEY)
+  if (!stored) return []
+  return JSON.parse(stored)
+}
+
+function saveRecurringLocal(items) {
+  localStorage.setItem(RECURRING_KEY, JSON.stringify(items))
+}
+
+export async function getRecurring() {
+  const userId = await getSupabaseUserId()
+  if (userId) {
+    try {
+      const { data, error } = await supabase
+        .from('recurring_transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: true })
+      if (!error) return data || []
+    } catch {}
+  }
+  return getRecurringLocal()
+}
+
+export async function addRecurring(rule) {
+  const userId = await getSupabaseUserId()
+  if (userId) {
+    try {
+      const { error } = await supabase
+        .from('recurring_transactions')
+        .insert({ ...rule, user_id: userId })
+      if (!error) return getRecurring()
+    } catch {}
+  }
+  const items = getRecurringLocal()
+  const newItem = { ...rule, id: crypto.randomUUID() }
+  const updated = [...items, newItem]
+  saveRecurringLocal(updated)
+  return updated
+}
+
+export async function updateRecurring(id, updates) {
+  const userId = await getSupabaseUserId()
+  if (userId) {
+    try {
+      const { error } = await supabase
+        .from('recurring_transactions')
+        .update(updates)
+        .eq('id', id)
+        .eq('user_id', userId)
+      if (!error) return getRecurring()
+    } catch {}
+  }
+  const items = getRecurringLocal()
+  const updated = items.map((r) => (r.id === id ? { ...r, ...updates } : r))
+  saveRecurringLocal(updated)
+  return updated
+}
+
+export async function deleteRecurring(id) {
+  const userId = await getSupabaseUserId()
+  if (userId) {
+    try {
+      const { error } = await supabase
+        .from('recurring_transactions')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', userId)
+      if (!error) return getRecurring()
+    } catch {}
+  }
+  const items = getRecurringLocal()
+  const updated = items.filter((r) => r.id !== id)
+  saveRecurringLocal(updated)
+  return updated
+}
+
+// ============================================
+// BUDGETS
+// ============================================
+
+const BUDGETS_KEY = 'fintrack_budgets'
+
+function getBudgetsLocal() {
+  const stored = localStorage.getItem(BUDGETS_KEY)
+  if (!stored) return []
+  return JSON.parse(stored)
+}
+
+function saveBudgetsLocal(items) {
+  localStorage.setItem(BUDGETS_KEY, JSON.stringify(items))
+}
+
+export async function getBudgets() {
+  const userId = await getSupabaseUserId()
+  if (userId) {
+    try {
+      const { data, error } = await supabase
+        .from('budgets')
+        .select('*')
+        .eq('user_id', userId)
+      if (!error) return data || []
+    } catch {}
+  }
+  return getBudgetsLocal()
+}
+
+export async function setBudget(category, amount) {
+  const userId = await getSupabaseUserId()
+  if (userId) {
+    try {
+      const { error } = await supabase
+        .from('budgets')
+        .upsert({ category, amount, user_id: userId }, { onConflict: 'user_id,category' })
+      if (!error) return getBudgets()
+    } catch {}
+  }
+  const budgets = getBudgetsLocal()
+  const existing = budgets.find((b) => b.category === category)
+  let updated
+  if (existing) {
+    updated = budgets.map((b) => (b.category === category ? { ...b, amount } : b))
+  } else {
+    updated = [...budgets, { id: crypto.randomUUID(), category, amount }]
+  }
+  saveBudgetsLocal(updated)
+  return updated
+}
+
+export async function deleteBudget(category) {
+  const userId = await getSupabaseUserId()
+  if (userId) {
+    try {
+      const { error } = await supabase
+        .from('budgets')
+        .delete()
+        .eq('user_id', userId)
+        .eq('category', category)
+      if (!error) return getBudgets()
+    } catch {}
+  }
+  const budgets = getBudgetsLocal()
+  const updated = budgets.filter((b) => b.category !== category)
+  saveBudgetsLocal(updated)
+  return updated
+}
