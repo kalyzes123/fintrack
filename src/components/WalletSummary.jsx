@@ -1,15 +1,10 @@
 import { ArrowRight, Wallet } from 'lucide-react'
 import { WALLET_TYPES } from '../lib/storage'
+import { formatBalance } from '../lib/utils'
 
 function getTypeLabel(value) {
   const t = WALLET_TYPES.find((wt) => wt.value === value)
   return t ? t.label : value
-}
-
-function formatBalance(amount) {
-  const abs = Math.abs(amount)
-  const formatted = abs.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  return (amount < 0 ? '-' : '') + 'RM' + formatted
 }
 
 export default function WalletSummary({ wallets = [], onNavigate }) {

@@ -1,19 +1,5 @@
 import { ArrowRight } from 'lucide-react'
-
-function formatDate(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00')
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
-function formatAmount(amount, type) {
-  const prefix = type === 'income' ? '+' : '-'
-  return `${prefix}RM${amount.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
-
-function getWalletName(wallets, id) {
-  const w = wallets.find((w) => w.id === id)
-  return w ? w.name : '—'
-}
+import { formatDate, formatAmount, getWalletName } from '../lib/utils'
 
 export default function RecentTransactions({ transactions, onNavigate, wallets = [] }) {
   const recent = transactions.slice(0, 5)

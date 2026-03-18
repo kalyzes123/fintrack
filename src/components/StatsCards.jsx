@@ -1,11 +1,5 @@
 import { TrendingUp, TrendingDown } from 'lucide-react'
-
-function formatCurrency(value) {
-  if (value >= 1000) {
-    return 'RM' + value.toLocaleString('en-MY', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
-  }
-  return 'RM' + value.toFixed(2)
-}
+import { formatCurrency } from '../lib/utils'
 
 export default function StatsCards({ transactions }) {
   const income = transactions
