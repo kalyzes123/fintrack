@@ -148,6 +148,20 @@ export async function updateProfile(data) {
   }
 }
 
+export async function resetPassword(email) {
+  if (!supabase) throw new Error('Password reset requires a Supabase account')
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin,
+  })
+  if (error) throw new Error(error.message)
+}
+
+export async function updatePassword(newPassword) {
+  if (!supabase) throw new Error('Password update requires a Supabase account')
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  if (error) throw new Error(error.message)
+}
+
 export async function logout() {
   if (supabase) {
     await supabase.auth.signOut()

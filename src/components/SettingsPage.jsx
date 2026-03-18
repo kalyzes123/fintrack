@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { WALLET_TYPES, MALAYSIAN_BANKS } from '../lib/storage'
+import ConfirmModal from './ConfirmModal'
 
 const inputCls =
   'w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:border-[var(--color-accent)]'
@@ -100,6 +101,7 @@ export default function SettingsPage({ wallets, onAddWallet, onUpdateWallet, onD
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({ name: '', type: 'cash', balance: '' })
   const [saveError, setSaveError] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   const handleAdd = async () => {
     if (!form.name.trim()) return
@@ -196,7 +198,7 @@ export default function SettingsPage({ wallets, onAddWallet, onUpdateWallet, onD
                     <Pencil size={15} />
                   </button>
                   <button
-                    onClick={() => onDeleteWallet(wallet.id)}
+                    onClick={() => setDeleteTarget(wallet)}
                     className="p-1.5 rounded hover:bg-red-50 text-[var(--color-text-muted)] hover:text-[var(--color-red)] shrink-0"
                   >
                     <Trash2 size={15} />
@@ -225,6 +227,15 @@ export default function SettingsPage({ wallets, onAddWallet, onUpdateWallet, onD
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete Wallet"
+        message={deleteTarget ? `Are you sure you want to delete "${deleteTarget.name}"? This cannot be undone.` : ''}
+        confirmLabel="Delete"
+        onConfirm={() => { onDeleteWallet(deleteTarget.id); setDeleteTarget(null) }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   )
 }

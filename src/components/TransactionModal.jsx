@@ -18,6 +18,7 @@ const defaultForm = {
 export default function TransactionModal({ open, onClose, onSave, transaction, wallets = [] }) {
   const [form, setForm] = useState(defaultForm)
   const [scanning, setScanning] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [scanError, setScanError] = useState('')
   const [errors, setErrors] = useState({})
   const fileInputRef = useRef(null)
@@ -42,7 +43,7 @@ export default function TransactionModal({ open, onClose, onSave, transaction, w
 
   if (!open) return null
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const newErrors = {}
     if (!form.description) {
@@ -56,11 +57,16 @@ export default function TransactionModal({ open, onClose, onSave, transaction, w
       return
     }
     setErrors({})
-    onSave({
-      ...form,
-      amount: parseFloat(form.amount),
-    })
-    onClose()
+    setSaving(true)
+    try {
+      await onSave({
+        ...form,
+        amount: parseFloat(form.amount),
+      })
+      onClose()
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleScanReceipt = async (e) => {
@@ -259,14 +265,17 @@ export default function TransactionModal({ open, onClose, onSave, transaction, w
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-gray-50"
+              disabled={saving}
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-gray-50 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2.5 bg-[var(--color-text-primary)] text-white rounded-lg text-sm font-medium hover:opacity-90"
+              disabled={saving}
+              className="flex-1 px-4 py-2.5 bg-[var(--color-text-primary)] text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
             >
+              {saving && <Loader2 size={15} className="animate-spin" />}
               {transaction ? 'Save Changes' : 'Add Transaction'}
             </button>
           </div>

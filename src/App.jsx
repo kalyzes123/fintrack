@@ -15,6 +15,7 @@ import MonthPicker from './components/MonthPicker'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import { getTransactions, addTransaction, updateTransaction, deleteTransaction, getWallets, addWallet, updateWallet, deleteWallet } from './lib/storage'
 import { getToken, getUser, logout } from './lib/auth'
 import { supabase } from './lib/supabase'
@@ -65,6 +66,17 @@ function App() {
       }
     }
     init()
+  }, [])
+
+  // Listen for Supabase password recovery event
+  useEffect(() => {
+    if (!supabase) return
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setAuthPage('reset-password')
+      }
+    })
+    return () => subscription.unsubscribe()
   }, [])
 
   const handleAuth = async (u) => {
@@ -178,6 +190,7 @@ function App() {
   if (authPage === 'landing') return <div className="font-primary h-full"><LandingPage onNavigate={setAuthPage} /></div>
   if (authPage === 'login') return <div className="font-primary h-full"><LoginPage onNavigate={setAuthPage} onAuth={handleAuth} /></div>
   if (authPage === 'register') return <div className="font-primary h-full"><RegisterPage onNavigate={setAuthPage} onAuth={handleAuth} /></div>
+  if (authPage === 'reset-password') return <div className="font-primary h-full"><ResetPasswordPage onNavigate={setAuthPage} /></div>
 
   // Authenticated app
   const sorted = [...transactions].sort((a, b) => {

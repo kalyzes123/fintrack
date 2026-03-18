@@ -13,11 +13,11 @@ export default function TransactionsPage({ transactions, onAdd, onUpdate, onDele
     tx.category.toLowerCase().includes(search.toLowerCase())
   )
 
-  const handleSave = (formData) => {
+  const handleSave = async (formData) => {
     if (editing) {
-      onUpdate(editing.id, formData)
+      await onUpdate(editing.id, formData)
     } else {
-      onAdd(formData)
+      await onAdd(formData)
     }
     setEditing(null)
   }
